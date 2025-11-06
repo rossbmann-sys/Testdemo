@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pumping Station Site Report Generator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for printing and main layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        .container-main {
+            max-width: 1200px;
+        }
+        .report-section {
+            border-left: 4px solid #3b82f6; /* Blue border for sections */
+            padding-left: 1rem;
+        }
+        .input-group label {
+            font-weight: 500;
+            color: #1f2937;
+        }
+        /* Styles to hide form/controls when printing */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .container-main {
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            .report-output {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            body {
+                background-color: white;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="container-main mx-auto">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8 no-print">Pumping Station Site Assessment Tool</h1>
+
+        <!-- Message Box for feedback (Non-Alert) -->
+        <div id="messageBox" class="fixed top-4 right-4 bg-green-500 text-white p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-0" style="min-width: 250px;"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Input Form Section -->
+            <div id="inputForm" class="bg-white p-6 rounded-xl shadow-2xl no-print">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Site Data Input</h2>
+                <form id="siteReportForm" class="space-y-4">
+                    
+                    <!-- Basic Data -->
+                    <div class="input-group">
+                        <label for="siteName" class="block text-sm">Site Name / ID</label>
+                        <input type="text" id="siteName" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" value="PS-XXX-2025" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="flowrate" class="block text-sm">Design Flowrate (e.g., L/s or $\text{m}^3/\text{h}$)</label>
+                        <input type="text" id="flowrate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" value="150 L/s" required>
+                    </div>
+
+                    <!-- Pumping & Contingency -->
+                    <div class="input-group">
+                        <label for="overPumpCapability" class="block text-sm">Over-Pump Capability & Plan</label>
+                        <textarea id="overPumpCapability" rows="3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">Temporary connections available on rising main. Requires 2x 6" diesel pumps for full capacity.</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="tankerRequirements" class="block text-sm">Tanker Requirements (Volume & Frequency)</label>
+                        <textarea id="tankerRequirements" rows="2" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">Requires 4x 30,000L tankers per 8-hour shift during peak demand.</textarea>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="pumpDetails" class="block text-sm">Installed Pump Details (Model, kW, Duty/Standby)</label>
+                        <textarea id="pumpDetails" rows="3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">Pump 1: Flygt N3153 (37kW, Duty). Pump 2: Flygt N3153 (37kW, Standby). Both commissioned 2018.</textarea>
+                    </div>
+
+                    <!-- Site Logistics -->
+                    <div class="input-group">
+                        <label for="siteAccess" class="block text-sm">Site Access Details (Key, Gate Code, Vehicle)</label>
+                        <textarea id="siteAccess" rows="2" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">Standard padlock key (K001). Access via single-track lane, suitable for 7.5T vehicles max.</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="roadClosure" class="block text-sm">Road Closure Requirements (If any)</label>
+                        <textarea id="roadClosure" rows="2" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">Minor road closure (single lane) required for HGV tanker operations only. Requires 48h notice.</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="siteAssets" class="block text-sm">Key Site Assets (Generator points, Kiosk type, etc.)</label>
+                        <textarea id="siteAssets" rows="2" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">125A generator connection point available. Main control kiosk is IP55 rated.</textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="liftingGearDate" class="block text-sm">Last Lifting Gear Inspection Date (LOLER/LEEA)</label>
+                        <input type="date" id="liftingGearDate" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" value="2024-05-15">
+                    </div>
+
+                    <!-- Rating & Improvements -->
+                    <div class="input-group">
+                        <label for="ratingScore" class="block text-sm">Site Rating Score (e.g., A/B/C or Custom)</label>
+                        <input type="text" id="ratingScore" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" value="C (Poor): High-risk, immediate action required.">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="siteImprovements" class="block text-sm">Recommended Site Improvements</label>
+                        <textarea id="siteImprovements" rows="4" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">1. Install dedicated pedestrian walkway access to wet well. 2. Replace non-compliant control panel isolation switch. 3. Clear vegetation surrounding the security fence.</textarea>
+                    </div>
+
+                    <button type="button" onclick="generateReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition duration-200">
+                        Generate Report
+                    </button>
+                </form>
+            </div>
+
+            <!-- Report Output Section -->
+            <div id="reportOutput" class="report-output bg-white p-6 rounded-xl shadow-2xl overflow-x-auto min-h-[400px] border border-gray-200 lg:col-span-1">
+                <p class="text-center text-gray-500">
+                    Input data and click 'Generate Report' to see the structured output here.
+                </p>
+            </div>
+        </div>
+
+        <!-- Report Actions -->
+        <div id="reportActions" class="flex justify-center space-x-4 mt-8 no-print hidden">
+            <button onclick="copyReportText()" class="flex items-center bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" /><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 1 1 0 01-2 0H8a1 1 0 01-1-1zm0 7h4a1 1 0 110 2H6a1 1 0 110-2z" /></svg>
+                Copy Report Text
+            </button>
+            <button onclick="window.print()" class="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3h2.25c.414 0 .75.336.75.75v8.5a.75.75 0 01-1.5 0V11h-2v5a.75.75 0 01-1.5 0V5a.75.75 0 011.5 0v1h2V5a.75.75 0 01.75-.75h2.25zM15.5 16.5a.75.75 0 001.5 0V14h2v2.5a.75.75 0 001.5 0V11h-2V5a.75.75 0 00-1.5 0v3h-2V5a.75.75 0 00-.75-.75h-2.25a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V11h2v5.5a.75.75 0 001.5 0z" clip-rule="evenodd" /></svg>
+                Print to PDF / Paper
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Placeholder for browser restrictions on clipboard API in iFrames
+        const showMessageBox = (message, isError = false) => {
+            const box = document.getElementById('messageBox');
+            box.textContent = message;
+            box.className = `fixed top-4 right-4 text-white p-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-100 ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+
+            setTimeout(() => {
+                box.classList.remove('opacity-100');
+                box.classList.add('opacity-0');
+            }, 3000);
+        };
+
+        const getInputValue = (id) => document.getElementById(id).value;
+
+        const generateReport = () => {
+            const siteName = getInputValue('siteName');
+            const flowrate = getInputValue('flowrate');
+            const overPumpCapability = getInputValue('overPumpCapability');
+            const tankerRequirements = getInputValue('tankerRequirements');
+            const pumpDetails = getInputValue('pumpDetails');
+            const siteAccess = getInputValue('siteAccess');
+            const roadClosure = getInputValue('roadClosure');
+            const siteAssets = getInputValue('siteAssets');
+            const liftingGearDate = getInputValue('liftingGearDate');
+            const ratingScore = getInputValue('ratingScore');
+            const siteImprovements = getInputValue('siteImprovements');
+
+            // Determine primary score and color based on the first letter of the custom input
+            const primaryScoreLetter = ratingScore.trim().toUpperCase().charAt(0);
+            let scoreColor = '#ef4444'; // Default to red (Poor/C)
+            let scoreDisplay = primaryScoreLetter;
+
+            if (primaryScoreLetter === 'A') {
+                scoreColor = '#10b981'; // Green (Excellent/A)
+            } else if (primaryScoreLetter === 'B') {
+                scoreColor = '#f59e0b'; // Amber (Good/B)
+            } else if (primaryScoreLetter === 'C') {
+                scoreColor = '#ef4444'; // Red (Poor/C)
+            } else {
+                // If it doesn't start with A, B, or C, just use the first word or N/A
+                scoreDisplay = ratingScore.split(/\s|[:(]/)[0] || 'N/A';
+            }
+
+            // --- Report Generation Logic ---
+            const reportDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const reportHTML = `
+                <div id="printableReport" class="p-4 sm:p-6 text-gray-800">
+                    <h1 class="text-3xl font-extrabold mb-2">${siteName} - Pumping Station Site Report</h1>
+                    <p class="text-lg text-gray-500 mb-6 border-b pb-4">Report Date: ${reportDate}</p>
+
+                    <!-- Site Summary & Rating -->
+                    <div class="mb-8 p-4 bg-gray-50 rounded-lg shadow-inner">
+                        <h2 class="text-xl font-semibold mb-2">Overall Site Assessment</h2>
+                        <p class="text-4xl font-bold inline-block mr-4" style="color: ${scoreColor}">
+                            Rating: ${scoreDisplay}
+                        </p>
+                        <p class="text-lg inline-block text-gray-600">${ratingScore}</p>
+                    </div>
+                    
+                    <!-- Section 1: Operational Data -->
+                    <div class="mb-6 report-section">
+                        <h2 class="text-2xl font-bold mb-3">1. Operational Data & Pump Details</h2>
+                        <div class="space-y-3 text-base">
+                            <p><strong>Design Flowrate:</strong> ${flowrate}</p>
+                            <p><strong>Pump Details:</strong> ${pumpDetails.replace(/\n/g, '<br>')}</p>
+                            <p><strong>Lifting Gear Inspection Date:</strong> ${liftingGearDate || 'N/A'}</p>
+                            <p><strong>Key Site Assets:</strong> ${siteAssets.replace(/\n/g, '<br>')}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Contingency Planning -->
+                    <div class="mb-6 report-section">
+                        <h2 class="text-2xl font-bold mb-3">2. Contingency & Temporary Works</h2>
+                        <div class="space-y-3 text-base">
+                            <p><strong>Over-Pump Capability & Plan:</strong> ${overPumpCapability.replace(/\n/g, '<br>')}</p>
+                            <p><strong>Tanker Requirements:</strong> ${tankerRequirements.replace(/\n/g, '<br>')}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Site Logistics -->
+                    <div class="mb-6 report-section">
+                        <h2 class="text-2xl font-bold mb-3">3. Site Logistics & Access</h2>
+                        <div class="space-y-3 text-base">
+                            <p><strong>Site Access Details:</strong> ${siteAccess.replace(/\n/g, '<br>')}</p>
+                            <p><strong>Road Closure Requirements:</strong> ${roadClosure.replace(/\n/g, '<br>')}</p>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Recommended Improvements -->
+                    <div class="mb-6 report-section">
+                        <h2 class="text-2xl font-bold mb-3">4. Recommended Site Improvements</h2>
+                        <pre class="whitespace-pre-wrap bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 text-base">${siteImprovements}</pre>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('reportOutput').innerHTML = reportHTML;
+            document.getElementById('reportActions').classList.remove('hidden');
+            showMessageBox('Report successfully generated.');
+        };
+
+        const copyReportText = () => {
+            const reportElement = document.getElementById('printableReport');
+            if (!reportElement) {
+                showMessageBox('Generate the report first.', true);
+                return;
+            }
+
+            // Convert the HTML report structure into a clean text/markdown format for copy/paste
+            let textContent = `--- PUMPING STATION SITE REPORT ---\n\n`;
+            textContent += `${getInputValue('siteName')} - Site Report\n`;
+            textContent += `Report Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}\n`;
+            textContent += `Overall Site Rating: ${getInputValue('ratingScore')}\n\n`;
+
+            textContent += `================================================\n`;
+            textContent += `1. OPERATIONAL DATA & PUMP DETAILS\n`;
+            textContent += `================================================\n`;
+            textContent += `Design Flowrate: ${getInputValue('flowrate')}\n`;
+            textContent += `Pump Details:\n${getInputValue('pumpDetails')}\n`;
+            textContent += `Lifting Gear Inspection Date: ${getInputValue('liftingGearDate') || 'N/A'}\n`;
+            textContent += `Key Site Assets:\n${getInputValue('siteAssets')}\n\n`;
+
+            textContent += `================================================\n`;
+            textContent += `2. CONTINGENCY & TEMPORARY WORKS\n`;
+            textContent += `================================================\n`;
+            textContent += `Over-Pump Capability & Plan:\n${getInputValue('overPumpCapability')}\n`;
+            textContent += `Tanker Requirements:\n${getInputValue('tankerRequirements')}\n\n`;
+
+            textContent += `================================================\n`;
+            textContent += `3. SITE LOGISTICS & ACCESS\n`;
+            textContent += `================================================\n`;
+            textContent += `Site Access Details:\n${getInputValue('siteAccess')}\n`;
+            textContent += `Road Closure Requirements:\n${getInputValue('roadClosure')}\n\n`;
+
+            textContent += `================================================\n`;
+            textContent += `4. RECOMMENDED SITE IMPROVEMENTS\n`;
+            textContent += `================================================\n`;
+            textContent += `${getInputValue('siteImprovements')}\n\n`;
+
+            // Attempt to copy using execCommand fallback
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showMessageBox('Report text copied to clipboard! Paste it into your Word document.');
+                } else {
+                    throw new Error('Fallback copy command failed.');
+                }
+            } catch (err) {
+                console.error('Copy failed:', err);
+                showMessageBox('Automatic copy failed. Please manually select and copy the text in the report area.', true);
+            } finally {
+                document.body.removeChild(tempTextArea);
+            }
+        };
+
+        // Initialize with a default report on load (optional)
+        document.addEventListener('DOMContentLoaded', () => {
+            generateReport();
+        });
+    </script>
+</body>
+</html>

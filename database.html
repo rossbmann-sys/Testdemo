@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pumping Station Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #EBF8FF; /* bg-blue-50 */
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #BEE3F8; /* border-blue-200 */
+            width: 80%;
+            max-width: 500px;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-blue-100 text-gray-900">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-black">Pumping Station & Treatment Works Database</h1>
+            <p class="text-gray-700 mt-2">A central hub for all your site information.</p>
+            <p class="text-sm text-gray-600 mt-2">Designed by Russell Allan</p>
+        </header>
+
+        <div class="bg-blue-50 p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800" id="form-title">Add New Site</h2>
+            <form id="site-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Site Name -->
+                <div>
+                    <label for="site-name" class="block text-sm font-medium text-gray-700">Site Name (e.g., SITE01SM)</label>
+                    <input type="text" id="site-name" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
+                    <p id="site-name-error" class="text-red-500 text-xs mt-1 hidden">Site name must be 6 characters and end with 'sm', 'sp', or 'st'.</p>
+                </div>
+
+                <!-- Generator Onsite -->
+                <div>
+                    <label for="generator-onsite" class="block text-sm font-medium text-gray-700">Generator Onsite?</label>
+                    <select id="generator-onsite" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option>Yes</option>
+                        <option selected>No</option>
+                    </select>
+                </div>
+
+                <!-- Generator Plug -->
+                <div>
+                    <label for="generator-plug" class="block text-sm font-medium text-gray-700">Generator Plug?</label>
+                    <select id="generator-plug" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option>Yes</option>
+                        <option selected>No</option>
+                    </select>
+                </div>
+
+                <!-- Overpump Compatible -->
+                <div>
+                    <label for="overpump-compatible" class="block text-sm font-medium text-gray-700">Overpump Compatible?</label>
+                    <select id="overpump-compatible" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option>Yes</option>
+                        <option selected>No</option>
+                    </select>
+                </div>
+
+                <!-- Bauer Couple Size -->
+                <div id="bauer-size-container" class="hidden">
+                    <label for="bauer-size" class="block text-sm font-medium text-gray-700">Bauer Couple Size</label>
+                    <select id="bauer-size" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option>3''</option>
+                        <option>4''</option>
+                        <option>5''</option>
+                    </select>
+                </div>
+
+                <!-- Rising Main Size -->
+                <div>
+                    <label for="rising-main-size" class="block text-sm font-medium text-gray-700">Rising Main Size (DN)</label>
+                    <input type="number" id="rising-main-size" min="40" max="800" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., 100">
+                </div>
+
+                <!-- Plug Onsite -->
+                <div>
+                    <label for="plug-onsite" class="block text-sm font-medium text-gray-700">Plug Onsite?</label>
+                    <select id="plug-onsite" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option>Yes</option>
+                        <option selected>No</option>
+                    </select>
+                </div>
+
+                <!-- Feeding Stations -->
+                <div>
+                    <label for="feeding-stations" class="block text-sm font-medium text-gray-700">How many pumping stations feed?</label>
+                    <input type="number" id="feeding-stations" min="0" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., 3">
+                </div>
+
+                <!-- EO Point -->
+                <div>
+                    <label for="eo-point" class="block text-sm font-medium text-gray-700">Has site got EO Point?</label>
+                    <select id="eo-point" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        <option>Yes</option>
+                        <option selected>No</option>
+                    </select>
+                </div>
+
+                <!-- What3Words -->
+                <div id="what3words-container" class="hidden">
+                    <label for="what3words" class="block text-sm font-medium text-gray-700">what3words of EO Point</label>
+                    <input type="text" id="what3words" class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="e.g., filled.count.soap">
+                </div>
+
+                <!-- Form Actions -->
+                <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-4 mt-4">
+                    <button type="button" id="cancel-edit" class="hidden px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Save Site</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="bg-blue-50 p-4 rounded-lg shadow-md mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <input type="text" id="search-input" placeholder="Search by site name..." class="w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                <select id="filter-generator" class="w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="">All (Generator)</option>
+                    <option value="Yes">Generator Onsite</option>
+                    <option value="No">No Generator</option>
+                </select>
+                <select id="filter-overpump" class="w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="">All (Overpump)</option>
+                    <option value="Yes">Overpump Compatible</option>
+                    <option value="No">Not Compatible</option>
+                </select>
+                 <button id="clear-filters" class="px-4 py-2 bg-blue-200 text-gray-700 rounded-md hover:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400">Clear Filters</button>
+            </div>
+        </div>
+
+        <!-- Site List -->
+        <div id="site-list-container" class="overflow-x-auto bg-blue-50 rounded-lg shadow-lg">
+             <div id="loading-indicator" class="p-8 text-center text-gray-600">Loading site data...</div>
+            <table class="min-w-full divide-y divide-blue-300 hidden" id="sites-table">
+                <thead class="bg-blue-200">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider cursor-pointer" data-sort="siteName">Site Name</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Generator Onsite</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Gen Plug</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Overpump</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Bauer Size</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider cursor-pointer" data-sort="risingMainSize">Rising Main (DN)</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">Plug Onsite</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider cursor-pointer" data-sort="feedingStations">Feeders</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">EO Point</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">w3w</th>
+                        <th scope="col" class="relative px-6 py-3">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="site-list" class="bg-blue-50 divide-y divide-blue-300">
+                    <!-- Site data will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal for confirmation -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content text-center text-gray-900">
+            <p id="modal-text" class="mb-4">Are you sure?</p>
+            <button id="modal-confirm" class="bg-red-600 text-white px-4 py-2 rounded-md mr-2">Confirm</button>
+            <button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md">Cancel</button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- In-Memory Data Store ---
+        let allSites = [];
+        let currentSort = { key: 'siteName', order: 'asc' };
+
+        // --- DOM Elements ---
+        const siteForm = document.getElementById('site-form');
+        const siteNameInput = document.getElementById('site-name');
+        const siteNameError = document.getElementById('site-name-error');
+        const overpumpSelect = document.getElementById('overpump-compatible');
+        const bauerSizeContainer = document.getElementById('bauer-size-container');
+        const eoPointSelect = document.getElementById('eo-point');
+        const what3wordsContainer = document.getElementById('what3words-container');
+        const siteList = document.getElementById('site-list');
+        const formTitle = document.getElementById('form-title');
+        const cancelEditBtn = document.getElementById('cancel-edit');
+        const searchInput = document.getElementById('search-input');
+        const filterGenerator = document.getElementById('filter-generator');
+        const filterOverpump = document.getElementById('filter-overpump');
+        const clearFiltersBtn = document.getElementById('clear-filters');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const sitesTable = document.getElementById('sites-table');
+
+        // Modal elements
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const modalText = document.getElementById('modal-text');
+        const modalConfirm = document.getElementById('modal-confirm');
+        const modalCancel = document.getElementById('modal-cancel');
+
+
+        // --- Seed Initial Data ---
+        function seedInitialData() {
+            console.log("Seeding initial sites into memory...");
+            const initialSites = [
+                { id: crypto.randomUUID(), siteName: 'COOTSP', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '4\"', risingMainSize: 150, plugOnsite: 'Yes', feedingStations: 2, eoPoint: 'Yes', what3words: 'joins.lights.pouch' },
+                { id: crypto.randomUUID(), siteName: 'ELYMSP', generatorOnsite: 'No', generatorPlug: 'No', overpumpCompatible: 'Yes', bauerSize: '3\"', risingMainSize: 100, plugOnsite: 'Yes', feedingStations: 1, eoPoint: 'No', what3words: '' },
+                { id: crypto.randomUUID(), siteName: 'ELYMST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'No', bauerSize: '', risingMainSize: 500, plugOnsite: 'Yes', feedingStations: 5, eoPoint: 'Yes', what3words: 'frosted.tweed.puzzles' },
+                { id: crypto.randomUUID(), siteName: 'SOMEST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '5\"', risingMainSize: 600, plugOnsite: 'Yes', feedingStations: 8, eoPoint: 'Yes', what3words: 'campus.puzzle.jets' },
+                { id: crypto.randomUUID(), siteName: 'WIMBSM', generatorOnsite: 'No', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '4\"', risingMainSize: 200, plugOnsite: 'Yes', feedingStations: 3, eoPoint: 'Yes', what3words: 'shredder.flicks.gravel' },
+                { id: crypto.randomUUID(), siteName: 'MARCHSP', generatorOnsite: 'Yes', generatorPlug: 'No', overpumpCompatible: 'No', bauerSize: '', risingMainSize: 120, plugOnsite: 'No', feedingStations: 1, eoPoint: 'No', what3words: '' },
+                { id: crypto.randomUUID(), siteName: 'CHATSM', generatorOnsite: 'No', generatorPlug: 'No', overpumpCompatible: 'Yes', bauerSize: '3\"', risingMainSize: 80, plugOnsite: 'Yes', feedingStations: 0, eoPoint: 'Yes', what3words: 'tolls.evenly.brand' },
+                { id: crypto.randomUUID(), siteName: 'DODDST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '5\"', risingMainSize: 700, plugOnsite: 'Yes', feedingStations: 10, eoPoint: 'Yes', what3words: 'fools.hidden.since' },
+                { id: crypto.randomUUID(), siteName: 'RAMSST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'No', bauerSize: '', risingMainSize: 450, plugOnsite: 'Yes', feedingStations: 6, eoPoint: 'No', what3words: '' },
+                { id: crypto.randomUUID(), siteName: 'PONDSP', generatorOnsite: 'No', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '4\"', risingMainSize: 250, plugOnsite: 'No', feedingStations: 2, eoPoint: 'Yes', what3words: 'staples.glows.pigtails' },
+                { id: crypto.randomUUID(), siteName: 'FENSM', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '3\"', risingMainSize: 100, plugOnsite: 'Yes', feedingStations: 1, eoPoint: 'Yes', what3words: 'shovels.swing.pelted' },
+                { id: crypto.randomUUID(), siteName: 'KINGSST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '5\"', risingMainSize: 800, plugOnsite: 'Yes', feedingStations: 12, eoPoint: 'Yes', what3words: 'archduke.tastings.warns' },
+                { id: crypto.randomUUID(), siteName: 'QUEENSM', generatorOnsite: 'No', generatorPlug: 'No', overpumpCompatible: 'No', bauerSize: '', risingMainSize: 90, plugOnsite: 'No', feedingStations: 1, eoPoint: 'No', what3words: '' },
+                { id: crypto.randomUUID(), siteName: 'DUKEST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '4\"', risingMainSize: 300, plugOnsite: 'Yes', feedingStations: 4, eoPoint: 'Yes', what3words: 'fended.poodle.remodel' },
+                { id: crypto.randomUUID(), siteName: 'EARLSP', generatorOnsite: 'No', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '3\"', risingMainSize: 150, plugOnsite: 'Yes', feedingStations: 2, eoPoint: 'No', what3words: '' },
+                { id: crypto.randomUUID(), siteName: 'BARONSM', generatorOnsite: 'Yes', generatorPlug: 'No', overpumpCompatible: 'No', bauerSize: '', risingMainSize: 180, plugOnsite: 'No', feedingStations: 1, eoPoint: 'Yes', what3words: 'gurgled.hounded.prowl' },
+                { id: crypto.randomUUID(), siteName: 'SUTTONST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '5\"', risingMainSize: 550, plugOnsite: 'Yes', feedingStations: 7, eoPoint: 'Yes', what3words: 'shuttled.fewer.puzzles' },
+                { id: crypto.randomUUID(), siteName: 'MERESP', generatorOnsite: 'No', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '4\"', risingMainSize: 220, plugOnsite: 'Yes', feedingStations: 3, eoPoint: 'Yes', what3words: 'reheat.paddlers.fended' },
+                { id: crypto.randomUUID(), siteName: 'FORDSP', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'No', bauerSize: '', risingMainSize: 100, plugOnsite: 'Yes', feedingStations: 1, eoPoint: 'No', what3words: '' },
+                { id: crypto.randomUUID(), siteName: 'SOUTHYST', generatorOnsite: 'Yes', generatorPlug: 'Yes', overpumpCompatible: 'Yes', bauerSize: '5\"', risingMainSize: 750, plugOnsite: 'Yes', feedingStations: 9, eoPoint: 'Yes', what3words: 'handfuls.pelted.gurgled' },
+            ];
+            allSites = initialSites;
+        }
+
+        // --- UI Logic ---
+        function renderSites() {
+            // Apply filtering
+            const searchTerm = searchInput.value.toLowerCase();
+            const generatorFilter = filterGenerator.value;
+            const overpumpFilter = filterOverpump.value;
+
+            const filteredSites = allSites.filter(site => {
+                const nameMatch = site.siteName.toLowerCase().includes(searchTerm);
+                const generatorMatch = !generatorFilter || site.generatorOnsite === generatorFilter;
+                const overpumpMatch = !overpumpFilter || site.overpumpCompatible === overpumpFilter;
+                return nameMatch && generatorMatch && overpumpMatch;
+            });
+
+            // Apply sorting
+            const sortedSites = filteredSites.sort((a, b) => {
+                const aVal = a[currentSort.key];
+                const bVal = b[currentSort.key];
+
+                if (aVal < bVal) return currentSort.order === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSort.order === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            siteList.innerHTML = ''; // Clear current list
+            if (sortedSites.length === 0) {
+                 siteList.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-gray-600">No sites found. Try adjusting your filters or adding a new site.</td></tr>`;
+            } else {
+                sortedSites.forEach(site => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-blue-200';
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${site.siteName}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.generatorOnsite}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.generatorPlug}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.overpumpCompatible}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.bauerSize || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.risingMainSize || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.plugOnsite}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.feedingStations || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.eoPoint}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${site.what3words || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button data-id="${site.id}" class="edit-btn text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                            <button data-id="${site.id}" class="delete-btn text-red-600 hover:text-red-900">Delete</button>
+                        </td>
+                    `;
+                    siteList.appendChild(tr);
+                });
+            }
+        }
+
+        // --- Event Listeners ---
+        
+        // Toggle visibility of conditional fields
+        overpumpSelect.addEventListener('change', () => {
+            bauerSizeContainer.classList.toggle('hidden', overpumpSelect.value !== 'Yes');
+        });
+
+        eoPointSelect.addEventListener('change', () => {
+            what3wordsContainer.classList.toggle('hidden', eoPointSelect.value !== 'Yes');
+        });
+
+        // Site Name Validation
+        siteNameInput.addEventListener('input', () => {
+            const name = siteNameInput.value.trim().toLowerCase();
+            const isValid = name.length === 6 && (name.endsWith('sm') || name.endsWith('sp') || name.endsWith('st'));
+            siteNameError.classList.toggle('hidden', isValid);
+            siteForm.querySelector('button[type="submit"]').disabled = !isValid;
+        });
+
+        // Form Submission (Add/Edit)
+        siteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const siteId = e.target.dataset.editingId;
+
+            const siteData = {
+                siteName: document.getElementById('site-name').value.toUpperCase(),
+                generatorOnsite: document.getElementById('generator-onsite').value,
+                generatorPlug: document.getElementById('generator-plug').value,
+                overpumpCompatible: document.getElementById('overpump-compatible').value,
+                bauerSize: document.getElementById('overpump-compatible').value === 'Yes' ? document.getElementById('bauer-size').value : '',
+                risingMainSize: parseInt(document.getElementById('rising-main-size').value) || null,
+                plugOnsite: document.getElementById('plug-onsite').value,
+                feedingStations: parseInt(document.getElementById('feeding-stations').value) || null,
+                eoPoint: document.getElementById('eo-point').value,
+                what3words: document.getElementById('eo-point').value === 'Yes' ? document.getElementById('what3words').value : ''
+            };
+
+            if (siteId) {
+                // Update existing site in the array
+                const siteIndex = allSites.findIndex(site => site.id === siteId);
+                if (siteIndex > -1) {
+                    allSites[siteIndex] = { ...allSites[siteIndex], ...siteData };
+                }
+            } else {
+                // Add new site to the array
+                siteData.id = crypto.randomUUID();
+                allSites.push(siteData);
+            }
+            
+            renderSites();
+            resetForm();
+        });
+
+        // Edit and Delete button clicks
+        siteList.addEventListener('click', (e) => {
+            const siteId = e.target.dataset.id;
+            if (!siteId) return;
+
+            if (e.target.classList.contains('edit-btn')) {
+                editSite(siteId);
+            } else if (e.target.classList.contains('delete-btn')) {
+                confirmDelete(siteId);
+            }
+        });
+
+        // Cancel Edit
+        cancelEditBtn.addEventListener('click', resetForm);
+        
+        // Search and Filter Listeners
+        searchInput.addEventListener('input', renderSites);
+        filterGenerator.addEventListener('change', renderSites);
+        filterOverpump.addEventListener('change', renderSites);
+        clearFiltersBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            filterGenerator.value = '';
+            filterOverpump.value = '';
+            renderSites();
+        });
+        
+        // Sorting Listener
+        document.querySelector('#sites-table thead').addEventListener('click', (e) => {
+            const key = e.target.dataset.sort;
+            if (!key) return;
+
+            if (currentSort.key === key) {
+                currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = key;
+                currentSort.order = 'asc';
+            }
+            renderSites();
+        });
+
+
+        // --- Helper Functions ---
+        function editSite(id) {
+            const site = allSites.find(s => s.id === id);
+            if (!site) return;
+
+            siteForm.dataset.editingId = id;
+            formTitle.textContent = `Editing Site: ${site.siteName}`;
+            
+            document.getElementById('site-name').value = site.siteName;
+            document.getElementById('generator-onsite').value = site.generatorOnsite;
+            document.getElementById('generator-plug').value = site.generatorPlug;
+            document.getElementById('overpump-compatible').value = site.overpumpCompatible;
+            document.getElementById('bauer-size').value = site.bauerSize || '';
+            document.getElementById('rising-main-size').value = site.risingMainSize || '';
+            document.getElementById('plug-onsite').value = site.plugOnsite;
+            document.getElementById('feeding-stations').value = site.feedingStations || '';
+            document.getElementById('eo-point').value = site.eoPoint;
+            document.getElementById('what3words').value = site.what3words || '';
+
+            // Show/hide conditional fields
+            overpumpSelect.dispatchEvent(new Event('change'));
+            eoPointSelect.dispatchEvent(new Event('change'));
+
+            cancelEditBtn.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function confirmDelete(id) {
+            const site = allSites.find(s => s.id === id);
+            if (!site) return;
+
+            modalText.textContent = `Are you sure you want to delete site ${site.siteName}? This action cannot be undone.`;
+            confirmationModal.style.display = 'block';
+
+            // Use .onclick to ensure we only have one listener at a time
+            modalConfirm.onclick = () => {
+                const siteIndex = allSites.findIndex(s => s.id === id);
+                if(siteIndex > -1) {
+                    allSites.splice(siteIndex, 1);
+                }
+                renderSites();
+                confirmationModal.style.display = 'none';
+            };
+
+            modalCancel.onclick = () => {
+                confirmationModal.style.display = 'none';
+            };
+        }
+
+        function resetForm() {
+            siteForm.reset();
+            delete siteForm.dataset.editingId;
+            formTitle.textContent = 'Add New Site';
+            cancelEditBtn.classList.add('hidden');
+            siteNameError.classList.add('hidden');
+            siteForm.querySelector('button[type="submit"]').disabled = false;
+            // Hide conditional fields
+            overpumpSelect.dispatchEvent(new Event('change'));
+            eoPointSelect.dispatchEvent(new Event('change'));
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            seedInitialData();
+            loadingIndicator.style.display = 'none';
+            sitesTable.style.display = 'table';
+            renderSites();
+        });
+
+    </script>
+</body>
+</html>

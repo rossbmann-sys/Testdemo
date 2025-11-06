@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFT Treatment Tanker Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and better focus states */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc;
+        }
+        input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        // Load the Inter font
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+
+        // --- Core Calculation Logic ---
+        function calculateTankers() {
+            // Get input values, converting them to floating-point numbers
+            const flowRate = parseFloat(document.getElementById('flowRate').value);
+            const capacity = parseFloat(document.getElementById('capacity').value);
+            const cycleTime = parseFloat(document.getElementById('cycleTime').value);
+            
+            // Result elements
+            const resultBoxMin = document.getElementById('resultBoxMin');
+            const resultValueMin = document.getElementById('resultValueMin');
+            const resultBoxMargin = document.getElementById('resultBoxMargin');
+            const resultValueMargin = document.getElementById('resultValueMargin');
+
+            // Reset error/visibility
+            resultBoxMin.classList.add('hidden');
+            resultBoxMargin.classList.add('hidden');
+            resultValueMin.textContent = '';
+            resultValueMargin.textContent = '';
+
+            // Input Validation
+            if (isNaN(flowRate) || isNaN(capacity) || isNaN(cycleTime) || flowRate <= 0 || capacity <= 0 || cycleTime <= 0) {
+                resultValueMin.textContent = 'Please enter valid positive numbers for all fields.';
+                resultBoxMin.classList.remove('hidden');
+                resultBoxMin.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
+                resultBoxMin.classList.remove('bg-blue-100', 'text-blue-800', 'border-blue-300');
+                return;
+            }
+
+            // Calculation Steps:
+            const secondsPerMinute = 60;
+            const safetyMargin = 1.30; // 30% buffer
+
+            // 1. Volume generated during one cycle (in Litres)
+            // Volume = Flow Rate (L/s) * Cycle Time (min) * 60 (s/min)
+            const volumeGenerated = flowRate * cycleTime * secondsPerMinute;
+
+            // 2. Theoretical Tankers needed
+            const theoreticalTankers = volumeGenerated / capacity;
+
+            // 3. Minimum Tankers needed (must be rounded up)
+            const actualTankersMin = Math.ceil(theoreticalTankers);
+
+            // 4. Tankers needed with 30% margin (rounded up, as you need whole tankers)
+            const actualTankersMargin = Math.ceil(theoreticalTankers * safetyMargin);
+            
+            // Display Minimum Requirement Results
+            resultValueMin.textContent = actualTankersMin.toLocaleString();
+            resultBoxMin.classList.remove('hidden');
+            resultBoxMin.classList.remove('bg-red-100', 'text-red-800', 'border-red-300');
+            resultBoxMin.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+
+            // Display Margined Results
+            resultValueMargin.textContent = actualTankersMargin.toLocaleString();
+            resultBoxMargin.classList.remove('hidden');
+            resultBoxMargin.classList.add('bg-blue-100', 'text-blue-800', 'border-blue-300');
+
+            // Set dynamic text for the full explanation box (optional advanced feature)
+            document.getElementById('volumeGenerated').textContent = volumeGenerated.toLocaleString(undefined, { maximumFractionDigits: 0 });
+            document.getElementById('theoreticalTankers').textContent = theoreticalTankers.toLocaleString(undefined, { maximumFractionDigits: 2 });
+            document.getElementById('marginTheoreticalTankers').textContent = (theoreticalTankers * safetyMargin).toLocaleString(undefined, { maximumFractionDigits: 2 });
+        }
+
+        // Set up event listeners after the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Attach calculation to input events for real-time updating
+            const inputs = document.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculateTankers);
+            });
+
+            // Run initial calculation with default values
+            calculateTankers();
+        });
+    </script>
+
+    <!-- Main Content Container -->
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white shadow-2xl rounded-xl p-8 space-y-6 border border-gray-100">
+
+            <!-- Title and Description -->
+            <header class="text-center">
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">FFT Treatment Tanker Calculator</h1>
+                <p class="mt-2 text-gray-500">Determine the minimum and recommended tanker fleet size.</p>
+            </header>
+
+            <!-- Input Form -->
+            <div class="space-y-5">
+
+                <!-- 1. Flow Rate -->
+                <div>
+                    <label for="flowRate" class="block text-sm font-medium text-gray-700 mb-1">Sewage Flow Rate (L/s)</label>
+                    <input type="number" id="flowRate" value="128" min="0.1" step="0.1"
+                           class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 transition duration-150"
+                           placeholder="e.g., 128">
+                    <p class="mt-1 text-xs text-gray-500">Litres per second coming to the site.</p>
+                </div>
+
+                <!-- 2. Tanker Capacity -->
+                <div>
+                    <label for="capacity" class="block text-sm font-medium text-gray-700 mb-1">Tanker Capacity (Litres)</label>
+                    <input type="number" id="capacity" value="15000" min="100" step="100"
+                           class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 transition duration-150"
+                           placeholder="e.g., 15000">
+                    <p class="mt-1 text-xs text-gray-500">Volume one tanker can carry.</p>
+                </div>
+
+                <!-- 3. Tanker Cycle Time -->
+                <div>
+                    <label for="cycleTime" class="block text-sm font-medium text-gray-700 mb-1">Tanker Cycle Time (Minutes)</label>
+                    <input type="number" id="cycleTime" value="45" min="1" step="1"
+                           class="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 transition duration-150"
+                           placeholder="e.g., 45">
+                    <p class="mt-1 text-xs text-gray-500">Time to fill, travel, empty, and return.</p>
+                </div>
+            </div>
+
+            <!-- Result Display Box: Minimum -->
+            <div id="resultBoxMin" class="p-6 rounded-xl border-2 transition-all duration-300 hidden bg-green-100 text-green-800 border-green-300">
+                <p class="text-lg font-semibold mb-2">Minimum Tankers Required (100% Capacity):</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-5xl font-extrabold" id="resultValueMin">--</span>
+                    <span class="text-xl font-bold">Tankers</span>
+                </div>
+            </div>
+            
+            <!-- Result Display Box: With Margin -->
+            <div id="resultBoxMargin" class="p-6 rounded-xl border-2 transition-all duration-300 hidden bg-blue-100 text-blue-800 border-blue-300">
+                <p class="text-lg font-semibold mb-2">Recommended Tankers (with 30% Margin):</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-5xl font-extrabold" id="resultValueMargin">--</span>
+                    <span class="text-xl font-bold">Tankers</span>
+                </div>
+            </div>
+
+            <!-- Calculation Details -->
+            <details class="mt-4 pt-3 border-t border-gray-200">
+                <summary class="text-sm font-medium text-gray-700 cursor-pointer">View Calculation Details</summary>
+                <div class="text-xs text-gray-600 mt-2 space-y-1">
+                    <p>Total Volume Generated during cycle (L): <span class="font-mono text-gray-800" id="volumeGenerated">--</span></p>
+                    <p>Theoretical Tankers Needed (No Margin): <span class="font-mono text-gray-800" id="theoreticalTankers">--</span></p>
+                    <p>Theoretical Tankers Needed (with 30% Margin): <span class="font-mono text-gray-800" id="marginTheoreticalTankers">--</span></p>
+                </div>
+            </details>
+
+            <!-- Footer -->
+            <footer class="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
+                Designed by Russell Allan
+            </footer>
+
+        </div>
+    </div>
+</body>
+</html>

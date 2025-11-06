@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wet Well Inflow Calculator</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .container {
+            min-height: 100vh;
+        }
+        /* Custom shadow for card */
+        .card-shadow {
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* Style for the active shape button */
+        .shape-active {
+            background-color: #1e40af; /* Blue-800 */
+            color: white;
+            border-color: #1e40af;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center container py-12">
+
+    <div class="w-full max-w-lg bg-white rounded-xl card-shadow overflow-hidden">
+        <div class="p-8">
+            <h1 class="text-3xl font-extrabold text-blue-900 mb-2">Wet Well Flow & Fill Time Calculator</h1>
+            <p class="text-gray-600 mb-8">Calculate inflow based on well dimensions and level rise over a 30-second interval, factoring in a 20% safety margin for wet weather.</p>
+
+            <!-- Shape Selector -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">1. Select Wet Well Shape</label>
+                <div class="flex space-x-4">
+                    <button id="btn-circular" onclick="setShape('circular')" class="flex-1 py-3 px-4 rounded-lg border-2 border-blue-500 text-blue-700 font-semibold transition duration-150 ease-in-out hover:bg-blue-50 hover:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        Circular 
+                    </button>
+                    <button id="btn-cuboid" onclick="setShape('cuboid')" class="flex-1 py-3 px-4 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold transition duration-150 ease-in-out hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        Cuboid 
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dimensions Input Area -->
+            <div id="dimensions-inputs" class="space-y-4">
+                <label class="block text-sm font-medium text-gray-700">2. Enter Wet Well Dimensions (meters)</label>
+                
+                <!-- Circular Inputs -->
+                <div id="circular-fields" class="space-y-4 hidden">
+                    <input type="number" id="diameter" placeholder="Diameter (m) e.g. 1.5" min="0.01" step="0.01" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <input type="number" id="depth_c" placeholder="Total Depth (m)" min="0.01" step="0.1" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Cuboid Inputs -->
+                <div id="cuboid-fields" class="space-y-4 hidden">
+                    <input type="number" id="length" placeholder="Length (m) e.g. 2.0" min="0.01" step="0.01" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <input type="number" id="width" placeholder="Width (m) e.g. 1.2" min="0.01" step="0.01" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    <input type="number" id="depth_cu" placeholder="Total Depth (m)" min="0.01" step="0.1" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Level Rise Input -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">3. Level Rise in 30 Seconds ($\Delta H$)</label>
+                <input type="number" id="level-rise" placeholder="Rise (mm) e.g. 150" min="1" step="1" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <p class="text-xs text-gray-500 mt-1">Please enter the rise in millimeters (mm).</p>
+            </div>
+            
+            <!-- Result Output: Flow Rate -->
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Calculated Results:</h2>
+                <div id="result-container" class="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                    
+                    <!-- Display Rise in CM -->
+                    <p class="text-sm font-medium text-gray-600">Level Rise ($\Delta H$) in Centimeters ($\text{cm}$):</p>
+                    <p id="level-rise-cm" class="text-2xl font-bold text-blue-800 mb-4">0.00</p>
+
+                    <p class="text-sm font-medium text-gray-600 pt-2 border-t border-blue-200">Factored Inflow Rate (Wet Weather: +20%) ($\text{L/s}$):</p>
+                    <p id="flow-lps" class="text-4xl font-extrabold text-blue-600">0.00</p>
+                    
+                    <p class="text-sm font-medium text-gray-600 mt-4">Factored Inflow Rate ($\text{m}^3/\text{h}$):</p>
+                    <p id="flow-cmh" class="text-2xl font-bold text-blue-800">0.00</p>
+                </div>
+            </div>
+
+            <!-- Result Output: Time to Fill -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Time to Fill Wet Well (using Factored Flow):</h2>
+                <div id="fill-time-container" class="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                    <p id="fill-time-display" class="text-2xl font-extrabold text-green-700">--</p>
+                    <p class="text-xs text-gray-500 mt-2">Time assumes a constant, **20% increased** flow rate from an empty well.</p>
+                </div>
+                <div id="error-message" class="mt-4 text-red-600 font-semibold hidden">
+                    Please ensure all required dimensions (including Total Depth) and the level rise are entered.
+                </div>
+            </div>
+
+            <!-- Result Output: Tanker Requirement -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">4. Tanker Requirement Calculator</h2>
+                
+                <input type="number" id="turnaround-time" placeholder="Tanker Turnaround Time (min)" min="1" step="1" oninput="calculateFlow()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4">
+                <p class="text-xs text-gray-500 mb-4">Assumes a fixed capacity of **15,000 Liters** per tanker.</p>
+
+                <div id="tanker-result-container" class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                    <p class="text-sm font-medium text-gray-600">Tankers Required to Maintain Flow:</p>
+                    <p id="tanker-count" class="text-4xl font-extrabold text-purple-700">--</p>
+                    <p class="text-sm text-gray-500 mt-2">This number is rounded up to ensure capacity.</p>
+                </div>
+                <div id="tanker-error-message" class="mt-4 text-red-600 font-semibold hidden">
+                    Please input the Tanker Turnaround Time to calculate requirements.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Global variable for the selected shape
+        let currentShape = 'circular'; 
+        
+        // Define constants
+        const TIME_INTERVAL_S = 30; // Time interval for measurement
+        const FLOW_SAFETY_FACTOR = 1.20; // 20% increase for wet weather flow
+        const TANKER_CAPACITY_L = 15000; // Fixed capacity for tanker
+
+        // Initialize the app state and UI on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setShape(currentShape); // Set default shape to circular
+            // Add event listeners to all relevant input fields to recalculate dynamically.
+            const inputs = document.querySelectorAll('#diameter, #depth_c, #length, #width, #depth_cu, #level-rise, #turnaround-time');
+            inputs.forEach(input => input.addEventListener('input', calculateFlow));
+        });
+
+        /**
+         * Toggles the UI visibility and updates the current shape.
+         * @param {string} shape - 'circular' or 'cuboid'.
+         */
+        function setShape(shape) {
+            currentShape = shape;
+            const circularFields = document.getElementById('circular-fields');
+            const cuboidFields = document.getElementById('cuboid-fields');
+            const btnCircular = document.getElementById('btn-circular');
+            const btnCuboid = document.getElementById('btn-cuboid');
+
+            if (shape === 'circular') {
+                circularFields.classList.remove('hidden');
+                cuboidFields.classList.add('hidden');
+                btnCircular.classList.add('shape-active', 'border-blue-800');
+                btnCircular.classList.remove('border-gray-300');
+                btnCuboid.classList.remove('shape-active', 'border-blue-800');
+                btnCuboid.classList.add('border-gray-300');
+
+                // Clear cuboid inputs when switching
+                document.getElementById('length').value = '';
+                document.getElementById('width').value = '';
+
+            } else { // cuboid
+                circularFields.classList.add('hidden');
+                cuboidFields.classList.remove('hidden');
+                btnCuboid.classList.add('shape-active', 'border-blue-800');
+                btnCuboid.classList.remove('border-gray-300');
+                btnCircular.classList.remove('shape-active', 'border-blue-800');
+                btnCircular.classList.add('border-gray-300');
+                
+                // Clear circular inputs when switching
+                document.getElementById('diameter').value = '';
+            }
+            
+            // Recalculate flow with the new shape
+            calculateFlow();
+        }
+
+        /**
+         * Main function to calculate the wet well flow rate, fill time, and tanker requirements.
+         */
+        function calculateFlow() {
+            const levelRiseInput = document.getElementById('level-rise');
+            const flowLpsElement = document.getElementById('flow-lps');
+            const flowCmhElement = document.getElementById('flow-cmh');
+            const fillTimeDisplay = document.getElementById('fill-time-display');
+            const levelRiseCmElement = document.getElementById('level-rise-cm'); 
+            const errorElement = document.getElementById('error-message');
+            
+            const tankerCountElement = document.getElementById('tanker-count');
+            const tankerErrorElement = document.getElementById('tanker-error-message');
+
+            const riseMm = parseFloat(levelRiseInput.value);
+            const turnaroundTimeMin = parseFloat(document.getElementById('turnaround-time').value);
+
+            // 1. Determine the base Area (A) and Total Depth (H_Total)
+            let A = 0; // Area in square meters (m^2)
+            let H_Total = 0; // Total Depth in meters (m)
+            let isValid = false;
+
+            if (currentShape === 'circular') {
+                const diameterInput = document.getElementById('diameter');
+                const depthInput = document.getElementById('depth_c');
+                const D = parseFloat(diameterInput.value);
+                H_Total = parseFloat(depthInput.value);
+
+                // Validation check
+                if (D > 0 && H_Total > 0 && riseMm > 0) {
+                    A = Math.PI * Math.pow(D / 2, 2);
+                    isValid = true;
+                }
+            } else if (currentShape === 'cuboid') {
+                const lengthInput = document.getElementById('length');
+                const widthInput = document.getElementById('width');
+                const depthInput = document.getElementById('depth_cu');
+                const L = parseFloat(lengthInput.value);
+                const W = parseFloat(widthInput.value);
+                H_Total = parseFloat(depthInput.value);
+
+                // Validation check
+                if (L > 0 && W > 0 && H_Total > 0 && riseMm > 0) {
+                    A = L * W;
+                    isValid = true;
+                }
+            }
+
+            if (isValid) {
+                errorElement.classList.add('hidden');
+
+                // --- FLOW RATE (Q) CALCULATION ---
+                const riseCm = riseMm / 10;
+                levelRiseCmElement.textContent = riseCm.toFixed(2);
+                
+                const riseM = riseMm / 1000;
+                const deltaV_m3 = A * riseM;
+                const flowRateM3s_base = deltaV_m3 / TIME_INTERVAL_S;
+                
+                // Apply Safety Factor
+                const flowRateM3s_factored = flowRateM3s_base * FLOW_SAFETY_FACTOR;
+
+                // Convert factored flow to desired units for display
+                const flowRateLps = flowRateM3s_factored * 1000;
+                const flowRateCmh = flowRateM3s_factored * 3600;
+
+                // Display Flow results
+                flowLpsElement.textContent = flowRateLps.toFixed(2);
+                flowCmhElement.textContent = flowRateCmh.toFixed(2);
+
+                // --- TIME TO FILL (T_Fill) CALCULATION ---
+                const totalVolumeM3 = A * H_Total;
+                const timeToFillSeconds = totalVolumeM3 / flowRateM3s_factored;
+
+                const hours = Math.floor(timeToFillSeconds / 3600);
+                const minutes = Math.floor((timeToFillSeconds % 3600) / 60);
+                const seconds = Math.round(timeToFillSeconds % 60);
+                
+                let timeString = '';
+                if (hours > 0) timeString += `${hours} hr `;
+                if (minutes > 0 || hours > 0) timeString += `${minutes} min `; 
+                timeString += `${seconds} sec`;
+
+                fillTimeDisplay.textContent = timeString.trim();
+                
+                
+                // --- TANKER REQUIREMENT CALCULATION ---
+                if (turnaroundTimeMin > 0) {
+                    tankerErrorElement.classList.add('hidden');
+
+                    // 1. Convert turnaround time from minutes to seconds
+                    const turnaroundTimeSeconds = turnaroundTimeMin * 60;
+
+                    // 2. Volume of sewage produced during one turnaround (in Liters)
+                    const flowRateLps_factored = flowRateLps; // Already calculated
+                    const volumeProducedLiters = flowRateLps_factored * turnaroundTimeSeconds;
+
+                    // 3. Calculate Number of Tankers Required, rounded up
+                    const tankersRequired = Math.ceil(volumeProducedLiters / TANKER_CAPACITY_L);
+
+                    // 4. Display result
+                    tankerCountElement.textContent = tankersRequired;
+
+                } else {
+                    // Flow is calculated but turnaround time is missing
+                    tankerErrorElement.classList.remove('hidden');
+                    tankerCountElement.textContent = '--';
+                }
+
+            } else {
+                // Display error and reset all results
+                errorElement.classList.remove('hidden');
+                flowLpsElement.textContent = '0.00';
+                flowCmhElement.textContent = '0.00';
+                levelRiseCmElement.textContent = '0.00'; 
+                fillTimeDisplay.textContent = '--';
+
+                tankerErrorElement.classList.add('hidden');
+                tankerCountElement.textContent = '--';
+            }
+        }
+    </script>
+</body>
+</html>

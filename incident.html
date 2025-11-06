@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Declaration Tool</title>
+    <!-- Tailwind CSS CDN - This will still require an internet connection for styling.
+         For a truly offline demo with styling, Tailwind CSS would need to be compiled
+         into a <style> block, but for simplicity and ease of sharing, CDN is kept. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font from Google Fonts - This will still require an internet connection for the font. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for past assessments log (though log is removed in this version) */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1; /* Light gray */
+            border-radius: 10px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #888; /* Darker gray */
+            border-radius: 10px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #555; /* Even darker gray on hover */
+        }
+        /* Dark mode scrollbar */
+        .dark .overflow-y-auto::-webkit-scrollbar-track {
+            background: #374151; /* Dark gray for dark mode */
+        }
+        .dark .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #6b7280; /* Lighter dark gray */
+        }
+        .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af; /* Even lighter dark gray on hover */
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 md:p-8 w-full max-w-2xl border border-gray-200 dark:border-gray-700">
+        <h1 class="text-3xl font-extrabold text-center text-gray-900 dark:text-white mb-2">
+            Incident Declaration Tool
+        </h1>
+        <p class="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">Designed by Russell Allan</p>
+
+        <!-- User ID Display removed as it was tied to Firebase authentication -->
+
+        <div id="questionsContainer" class="space-y-6 mb-8">
+            <!-- Questions will be dynamically loaded here by JavaScript -->
+        </div>
+
+        <div class="flex justify-center space-x-4 mb-8">
+            <button
+                id="submitAssessmentBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+                Submit Assessment
+            </button>
+            <button
+                id="resetAssessmentBtn"
+                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-xl shadow-lg transform transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500 focus:ring-opacity-50"
+            >
+                Reset
+            </button>
+        </div>
+
+        <div id="declarationResult" class="hidden">
+            <!-- Declaration result will be displayed here by JavaScript -->
+        </div>
+
+        <!-- Past Assessments Log section removed as it relied on Firebase -->
+    </div>
+
+    <script>
+        // Initial questions data
+        let questions = [
+            { id: 'q1', text: 'To return site to functional condition, will it take more than 3 hours after polluting?', answered: null },
+            { id: 'q2', text: 'How long has site been polluting? More than 2 hours?', answered: null },
+            { id: 'q3', text: 'Is the pollution at point of impact above 15ppm ammonia?', answered: null },
+            { id: 'q4', text: 'If pollution has occurred on land, is the pollution bigger than 500m?', answered: null },
+            { id: 'q5', text: 'If you cannot get support within 3 hours, will there be a potential pollution?', answered: null },
+            { id: 'q6', text: 'How many phone calls are needed to be made? Are you making 10 or more phone calls in the last 1 hour?', answered: null },
+        ];
+
+        // DOM elements
+        const questionsContainer = document.getElementById('questionsContainer');
+        const submitAssessmentBtn = document.getElementById('submitAssessmentBtn');
+        const resetAssessmentBtn = document.getElementById('resetAssessmentBtn');
+        const declarationResultDiv = document.getElementById('declarationResult');
+
+        /**
+         * Renders the questions on the page.
+         */
+        function renderQuestions() {
+            questionsContainer.innerHTML = ''; // Clear existing questions
+            questions.forEach(q => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-600';
+                questionDiv.innerHTML = `
+                    <p class="font-semibold text-gray-800 dark:text-gray-200 mb-3 text-lg">${q.text}</p>
+                    <div class="flex items-center space-x-6">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input
+                                type="radio"
+                                name="${q.id}"
+                                value="yes"
+                                ${q.answered === 'yes' ? 'checked' : ''}
+                                class="form-radio h-5 w-5 text-red-600 dark:text-red-400 focus:ring-red-500"
+                            />
+                            <span class="ml-2 text-gray-700 dark:text-gray-300 text-base">Yes</span>
+                        </label>
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input
+                                type="radio"
+                                name="${q.id}"
+                                value="no"
+                                ${q.answered === 'no' ? 'checked' : ''}
+                                class="form-radio h-5 w-5 text-green-600 dark:text-green-400 focus:ring-green-500"
+                            />
+                            <span class="ml-2 text-gray-700 dark:text-gray-300 text-base">No</span>
+                        </label>
+                    </div>
+                `;
+                questionsContainer.appendChild(questionDiv);
+
+                // Add event listeners to the newly created radio buttons
+                const radioButtons = questionDiv.querySelectorAll(`input[name="${q.id}"]`);
+                radioButtons.forEach(radio => {
+                    radio.addEventListener('change', (event) => handleAnswerChange(q.id, event.target.value));
+                });
+            });
+        }
+
+        /**
+         * Handles the change event for a question's answer.
+         * @param {string} questionId - The ID of the question.
+         * @param {string} answer - The selected answer ('yes' or 'no').
+         */
+        function handleAnswerChange(questionId, answer) {
+            questions = questions.map(q =>
+                q.id === questionId ? { ...q, answered: answer } : q
+            );
+            // Hide previous result when an answer changes
+            declarationResultDiv.classList.add('hidden');
+            declarationResultDiv.innerHTML = '';
+        }
+
+        /**
+         * Evaluates the incident based on the answers and displays the result.
+         */
+        function evaluateIncident() {
+            const allAnswered = questions.every(q => q.answered !== null);
+            if (!allAnswered) {
+                displayResult('error', 'Please answer all questions before submitting.');
+                return;
+            }
+
+            let declare = false;
+            questions.forEach(q => {
+                if (q.answered === 'yes') {
+                    declare = true;
+                }
+            });
+
+            const resultText = declare ? 'DECLARE INCIDENT' : 'NO DECLARATION REQUIRED';
+            const resultType = declare ? 'declare' : 'no-declare';
+            displayResult(resultType, resultText);
+        }
+
+        /**
+         * Displays the assessment result message.
+         * @param {string} type - 'declare', 'no-declare', or 'error'.
+         * @param {string} message - The message to display.
+         */
+        function displayResult(type, message) {
+            declarationResultDiv.classList.remove('hidden');
+            let bgColorClass, textColorClass, borderColorClass, guidanceMessage = '';
+
+            if (type === 'declare') {
+                bgColorClass = 'bg-red-100 dark:bg-red-900';
+                textColorClass = 'text-red-800 dark:text-red-200';
+                borderColorClass = 'border-red-300 dark:border-red-700';
+                guidanceMessage = 'Immediate action required. Follow your organization\'s incident response protocol.';
+            } else if (type === 'no-declare') {
+                bgColorClass = 'bg-green-100 dark:bg-green-900';
+                textColorClass = 'text-green-800 dark:text-green-200';
+                borderColorClass = 'border-green-300 dark:border-green-700';
+                guidanceMessage = 'No formal declaration required based on current answers. Continue to monitor.';
+            } else { // error
+                bgColorClass = 'bg-yellow-100 dark:bg-yellow-900';
+                textColorClass = 'text-yellow-800 dark:text-yellow-200';
+                borderColorClass = 'border-yellow-300 dark:border-yellow-700';
+            }
+
+            declarationResultDiv.className = `p-5 rounded-xl text-center font-extrabold text-2xl md:text-3xl shadow-md transition-all duration-300 ease-in-out border-2
+                ${bgColorClass} ${textColorClass} ${borderColorClass}`;
+            declarationResultDiv.innerHTML = `
+                ${message}
+                ${guidanceMessage ? `<p class="text-base font-normal mt-2 ${type === 'declare' ? 'text-red-700 dark:text-red-300' : type === 'no-declare' ? 'text-green-700 dark:text-green-300' : ''}">
+                    ${guidanceMessage}
+                </p>` : ''}
+            `;
+        }
+
+        /**
+         * Resets the assessment by clearing all answers and the result.
+         */
+        function resetAssessment() {
+            questions = questions.map(q => ({ ...q, answered: null }));
+            renderQuestions(); // Re-render to clear radio button selections
+            declarationResultDiv.classList.add('hidden');
+            declarationResultDiv.innerHTML = '';
+        }
+
+        // Initialize on window load
+        window.onload = function() {
+            renderQuestions(); // Initial render of questions
+        };
+
+        // Event Listeners
+        submitAssessmentBtn.addEventListener('click', evaluateIncident);
+        resetAssessmentBtn.addEventListener('click', resetAssessment);
+    </script>
+</body>
+</html>
